@@ -132,10 +132,6 @@ const store = (req, res) => {
 };
 
 
-//UPDATE
-function update() {
-
-
    function update(req, res) {
   console.log('METHOD:', req.method);
   console.log('URL:', req.url);
