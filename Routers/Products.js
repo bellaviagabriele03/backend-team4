@@ -8,13 +8,13 @@ const router = express.Router();
 //INDEX
 router.get("/", controller.index)
 
-// //SHOW
-// router.get()
+ //SHOW
+  router.get("/:slug",controller.show)
 
-// //STORE
-// router.post()
+ //STORE
+ 
 
-// //UPDATE
+ //UPDATE
 // router.put()
 
 // //MODIFY
