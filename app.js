@@ -2,7 +2,6 @@ import express from "express"
 import router from "./Routers/Products.js";
 
 const app = express();
-
 const port = process.env.SERVER_PORT;
 
 app.use(express.json())
