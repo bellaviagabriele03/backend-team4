@@ -12,7 +12,7 @@ router.get("/", controller.index)
 // router.get()
 
 // //STORE
-// router.post()
+router.post("/", controller.store)
 
 // //UPDATE
 // router.put()
@@ -21,6 +21,6 @@ router.get("/", controller.index)
 // router.patch()
 
 // //DESTROY
-// router.delete()
+router.delete("/:id", controller.destroy)
 
 export default router;
