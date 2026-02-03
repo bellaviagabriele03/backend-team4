@@ -2,37 +2,63 @@ import connection from "../database/databaseConnection.js"
 
 
 //INDEX
-function index (req,res){
-    const query= "SELECT * FROM `products`"
-    connection.query(query,(err,result)=>{
-    if(err){
-        res.status(500)
-        return res.json({
-            message:"internal server error"
+function index(req, res) {
+    const categories = req.query.categories
+
+    if (categories === "") {
+        const query = "SELECT * FROM `products`"
+        connection.query(query, (err, result) => {
+            if (err) {
+                res.status(500)
+                return res.json({
+                    message: "internal server error"
+                })
+            }
+            res.json({
+                results: result
+            })
+        })
+    } else {
+        const query = "SELECT * FROM `products` INNER JOIN `categories` ON products.category_id = categories.id WHERE categories.name = ?"
+        connection.query(query, [categories], (err, result)=>{
+            if(err) {
+                res.status(500);
+                return res.json({
+                    message: "internal server error"
+                })
+            }
+            res.json({
+                info: {
+                    categoria: categories,
+                    count: result
+                },
+                result: result
+            })
+
         })
     }
-    res.json({
-        results:result
-    })
-    })
+
+
 }
+
+
 //SHOW
-function show(req,res) {
-    const slug= req.params.slug
+function show(req, res) {
+    const slug = req.params.slug
     const query = "SELECT * FROM `products` WHERE `products`.slug = ? "
-    connection.query(query,[slug],(err,result)=>{
-        if(err){
+    connection.query(query, [slug], (err, result) => {
+        if (err) {
             res.status(500);
             return res.json({
-                message:"internal server error"
+                message: "internal server error"
             })
         }
-        if(result.length === 0 ){
+        if (result.length === 0) {
             res.status(404);
             res.json({
-                message:"gioco non trovato"
+                message: "gioco non trovato"
             })
-        }else{
+        } else {
             const gioco = result[0];
             res.json(gioco)
         }
