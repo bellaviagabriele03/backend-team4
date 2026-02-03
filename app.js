@@ -1,12 +1,15 @@
 import express from "express"
-import router from "./Routers/Products";
+import router from "./Routers/Products.js";
+
 const app = express();
 
 const port = process.env.SERVER_PORT;
+app.use("/back-to-the-retro/api/products", router)
+
 
 app.use(express.json())
 
-app.use("/back-to-the-retro/api/products", router)
+
 
 app.listen(port, (err)=>{
     if(err) throw err

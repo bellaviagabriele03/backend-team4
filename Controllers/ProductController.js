@@ -1,9 +1,9 @@
-import connection from "../database/databaseConnection";
+import connection from "../database/databaseConnection.js"
 
 
 //INDEX
 function index () {
-
+    console.log("funzione index")
 }
 //SHOW
 function show() {

@@ -1,24 +1,26 @@
 import express from "express"
-import controller from "../Controllers/ProductController";
+import controller from "../Controllers/ProductController.js";
+
+
 const router = express.Router();
 
 
 //INDEX
-router.get("/rotta", controller.index)
+router.get("/", controller.index)
 
-//SHOW
-router.get()
+// //SHOW
+// router.get()
 
-//STORE
-router.post()
+// //STORE
+// router.post()
 
-//UPDATE
-router.put()
+// //UPDATE
+// router.put()
 
-//MODIFY
-router.patch()
+// //MODIFY
+// router.patch()
 
-//DESTROY
-router.delete()
+// //DESTROY
+// router.delete()
 
 export default router;
