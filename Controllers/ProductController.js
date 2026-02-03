@@ -30,7 +30,7 @@ function index(req, res) {
             res.json({
                 info: {
                     categoria: categories,
-                    count: result
+                    count: result.length
                 },
                 result: result
             })
@@ -135,11 +135,13 @@ const store = (req, res) => {
 //UPDATE
 function update() {
 
+
 }
 //MODIFY
 function modify() {
 
 }
+
 //DESTROY
 const destroy = (req, res) => {
     connection.query('DELETE FROM products WHERE id = ?', [req.params.id], (err, result) => {
