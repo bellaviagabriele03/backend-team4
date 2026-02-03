@@ -15,7 +15,7 @@ router.get("/", controller.index)
  
 
  //UPDATE
-// router.put()
+  router.put('/:slug', controller.update);
 
 // //MODIFY
 // router.patch()

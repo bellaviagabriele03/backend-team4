@@ -43,15 +43,95 @@ function show(req,res) {
 function store() {
 
 }
-//UPDATE
-function update() {
+// update
 
+
+   function update(req, res) {
+  console.log('METHOD:', req.method);
+  console.log('URL:', req.url);
+  console.log('HEADERS content-type:', req.headers['content-type']);
+  console.log('BODY RAW:', req.body);
+
+  const slug = req.params.slug;
+
+  const {
+    name,
+    cover_image,
+    platform_id,
+    category_id,
+    description,
+    price,
+    state_id,
+    conditions_description,
+    discounted_price,
+    stock,
+    production_year,
+  } = req.body;
+
+  const query = `
+    UPDATE products
+    SET
+      name                    = ?,
+      cover_image             = ?,
+      platform_id             = ?,
+      category_id             = ?,
+      description             = ?,
+      price                   = ?,
+      state_id                = ?,
+      conditions_description  = ?,
+      discounted_price        = ?,
+      stock                   = ?,
+      production_year         = ?,
+      updated_at              = NOW()
+    WHERE slug = ?
+  `;
+  const params = [
+    name,
+    cover_image,
+    platform_id,
+    category_id,
+    description,
+    price,
+    state_id,
+    conditions_description,
+    discounted_price,
+    stock,
+    production_year,
+    slug,
+  ];
+  connection.query(query, params, (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        error: err.message
+      });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Prodotto non trovato"
+      });
+    }
+
+    connection.query(
+      'SELECT * FROM products WHERE slug = ?',
+      [slug],
+      (err2, results) => {
+        if (err2) {
+          return res.status(500).json({ success: false, error: err2.message });
+        }
+        res.status(200).json({ success: true, data: results[0] });
+      }
+    );
+  });
 }
+
+
 //MODIFY
 function modify() {
 
 }
-//DESTROY
+//DELETE
 function destroy() {
 
 }

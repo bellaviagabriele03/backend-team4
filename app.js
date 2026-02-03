@@ -3,10 +3,10 @@ import router from "./Routers/Products.js";
 
 const app = express();
 const port = process.env.SERVER_PORT;
+app.use(express.json())
 app.use("/retro/api/products", router)
 
 
-app.use(express.json())
 app.get("/",(req,res)=>{
     res.send("where memories respawn")
 })               
