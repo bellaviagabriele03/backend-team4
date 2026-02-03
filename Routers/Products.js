@@ -11,8 +11,8 @@ router.get("/", controller.index)
  //SHOW
   router.get("/:slug",controller.show)
 
- //STORE
- 
+// //STORE
+router.post("/", controller.store)
 
  //UPDATE
   router.put('/:slug', controller.update);
@@ -21,6 +21,6 @@ router.get("/", controller.index)
 // router.patch()
 
 // //DESTROY
-// router.delete()
+router.delete("/:id", controller.destroy)
 
 export default router;
