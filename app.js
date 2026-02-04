@@ -4,9 +4,9 @@ import cors from "cors"
 
 const app = express();
 const port = process.env.SERVER_PORT;
-
+const portFrontend = process.env.FRONTEND_PORT;
 app.use(cors({
-    origin: "http://localhost:5173"
+    origin: `http://localhost:${portFrontend}`
 }))
 
 
