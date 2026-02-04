@@ -5,7 +5,8 @@ import connection from "../database/databaseConnection.js"
 function index(req, res) {
     const categories = req.query.categories
 
-    if (categories === "") {
+    
+    if (categories === undefined) {
         const query = "SELECT * FROM `products`"
         connection.query(query, (err, result) => {
             if (err) {
@@ -19,7 +20,7 @@ function index(req, res) {
             })
         })
     } else {
-        const query = "SELECT * FROM `products` INNER JOIN `categories` ON products.category_id = categories.id WHERE categories.name = ?"
+        const query = "SELECT products.*  FROM `products` INNER JOIN `categories` ON products.category_id = categories.id WHERE categories.name = ?"
         connection.query(query, [categories], (err, result)=>{
             if(err) {
                 res.status(500);
@@ -30,7 +31,7 @@ function index(req, res) {
             res.json({
                 info: {
                     categoria: categories,
-                    count: result
+                    count: result.length
                 },
                 result: result
             })
