@@ -46,7 +46,10 @@ function index(req, res) {
 //SHOW
 function show(req, res) {
     const slug = req.params.slug
-    const query = "SELECT * FROM `products` WHERE `products`.slug = ? "
+    const query = "SELECT products.*, platforms.name as platform_name, categories.name as category_name, platforms.brand as platform_brand FROM products INNER JOIN platforms on platform_id = platforms.id INNER JOIN categories ON products.category_id = categories.id WHERE products.slug = ?"   
+   
+   
+   //query per prelevare il singolo prodotto 
     connection.query(query, [slug], (err, result) => {
         if (err) {
             res.status(500);
@@ -60,10 +63,21 @@ function show(req, res) {
                 message: "gioco non trovato"
             })
         } else {
-            const gioco = result[0];
-            res.json(gioco)
+            const gioco = result;
+            
+            console.log(gioco);
+            
+            
+            res.json({
+                results: gioco,
+                
+            })
         }
+
     })
+
+
+    //
 
 }
 //STORE
