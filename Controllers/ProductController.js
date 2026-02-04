@@ -33,7 +33,7 @@ function index(req, res) {
                     categoria: categories,
                     count: result.length
                 },
-                result: result
+                results: result
             })
 
         })
