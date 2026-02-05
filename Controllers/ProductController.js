@@ -4,10 +4,10 @@ import connection from "../database/databaseConnection.js"
 //INDEX
 function index(req, res) {
     const categories = req.query.categories
-    
+
 
     if (categories === undefined) {
-        
+
         const query = "SELECT products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id"
         connection.query(query, (err, result) => {
             if (err) {
@@ -50,10 +50,9 @@ function index(req, res) {
 //SHOW
 function show(req, res) {
     const slug = req.params.slug
-    const query = "SELECT products.*, platforms.name as platform_name, categories.name as category_name, platforms.brand as platform_brand FROM products INNER JOIN platforms on platform_id = platforms.id INNER JOIN categories ON products.category_id = categories.id WHERE products.slug = ?"   
-   
-   
-   //query per prelevare il singolo prodotto 
+    const query = "SELECT products.name, products.slug, products.description, products.cover_image, products.price, products.conditions_description, products.discounted_price, products.stock, products.production_year, platforms.name as platform  FROM `products` INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `states` ON products.state_id = states.id WHERE products.slug = ?"
+
+    //query per prelevare il singolo prodotto 
     connection.query(query, [slug], (err, result) => {
         if (err) {
             res.status(500);
@@ -68,13 +67,13 @@ function show(req, res) {
             })
         } else {
             const gioco = result;
-            
+
             console.log(gioco);
-            
-            
+
+
             res.json({
                 results: gioco,
-                
+
             })
         }
 
@@ -101,6 +100,8 @@ const store = (req, res) => {
         discounted_price
     } = req.body;
 
+
+   
 
     if (!name || !slug || !platform_id || !category_id || !price || !state_id || stock == null) {
         return res.status(400).json({
