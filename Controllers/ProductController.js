@@ -84,7 +84,7 @@ function show(req, res) {
     //
 
 }
-//STORE
+//STORE --FINAL 
 const store = (req, res) => {
     const object = {
         name: req.body.name,
@@ -131,10 +131,6 @@ const store = (req, res) => {
             error: error.details[0].message
         });
     }
-
-
-
-
     const queryProduct = `
     INSERT INTO products
     (name, slug, cover_image, platform_id, category_id, description, price, state_id, conditions_description, discounted_price, stock, production_year, created_at, updated_at)
@@ -153,19 +149,16 @@ const store = (req, res) => {
 
     connection.query(queryCategories, (err, categories) => {
         if (err) return res.status(500).json({ error: err });
-
         const found = categories.find(c => c.name === object.category);
         if (!found) return res.status(400).json({ error: "categoria non valida" });
         object.category = found.id;
 
-        // STATE: prendo id se esiste, altrimenti inserisco
         connection.query(queryStateSelect, [object.state], (err, stateRows) => {
             if (err) return res.status(500).json({ error: err });
 
             const handleStateId = (stateId) => {
                 const slugPlatforms = slugify(object.platform, { lower: true, replacement: "_" });
 
-                // PLATFORM: prendo id se esiste, altrimenti inserisco
                 connection.query(queryPlatformSelect, [slugPlatforms], (err, platformRows) => {
                     if (err) return res.status(500).json({ error: err });
 
@@ -231,13 +224,7 @@ const store = (req, res) => {
         });
     });
 };
-
-
-
-
-
-
-
+//UPDATE --
 function update(req, res) {
     console.log('METHOD:', req.method);
     console.log('URL:', req.url);
