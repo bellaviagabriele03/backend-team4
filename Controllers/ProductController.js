@@ -86,107 +86,123 @@ function show(req, res) {
 }
 //STORE
 const store = (req, res) => {
+  const object = {
+    name: req.body.name,
+    description: req.body.description,
+    platform: req.body.platform,
+    price: req.body.price,
+    state: req.body.state,
+    state_description: req.body.state_description,
+    conditions_description: req.body.conditions_description,
+    stock: req.body.stock,
+    production_year: req.body.production_year,
+    cover_image: req.body.cover_image,
+    discounted_price: req.body.discounted_price,
+    brand: req.body.brand,
+    category: req.body.category
+  };
 
-    const object = {
-        name: req.body.name,
-        description: req.body.description,
-        platform: req.body.platform,
-        price: req.body.price,
-        state: req.body.state,
-        state_description: req.body.state_description,
-        conditions_description: req.body.conditions_description,
-        stock: req.body.stock,
-        production_year: req.body.production_year,
-        cover_image: req.body.cover_image,
-        discounted_price: req.body.discounted_price,
-        brand: req.body.brand,
-        category: req.body.category
-    }
+  const queryProduct = `
+    INSERT INTO products
+    (name, slug, cover_image, platform_id, category_id, description, price, state_id, conditions_description, discounted_price, stock, production_year, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+  `;
 
-    const queryProduct = `INSERT INTO products (name, slug, cover_image, platform_id, category_id, description, price, state_id, conditions_description, discounted_price, stock, production_year, created_at, update_at) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
+  const queryPlatformInsert = `
+    INSERT INTO platforms (name, slug, brand, created_at, updated_at)
+    VALUES (?, ?, ?, NOW(), NOW())
+  `;
 
-    const queryPlatform = `INSERT INTO platforms (name, slug, brand, created_at, updated_at,) VALUES (?, ?, ?, NOW(), NOW())`;
+  const queryPlatformSelect = `SELECT id FROM platforms WHERE slug = ?`;
+  const queryCategories = `SELECT * FROM categories`;
+  const queryStateInsert = `INSERT INTO states (name, description) VALUES (?, ?)`;
+  const queryStateSelect = `SELECT id FROM states WHERE name = ?`;
 
-    const queryCategories = `SELECT * from categories`
+  connection.query(queryCategories, (err, categories) => {
+    if (err) return res.status(500).json({ error: err });
 
-    const queryStates = `INSER INTO states (name, description) VALUES (?. ?)`
+    const found = categories.find(c => c.name === object.category);
+    if (!found) return res.status(400).json({ error: "categoria non valida" });
+    object.category = found.id;
 
+    // STATE: prendo id se esiste, altrimenti inserisco
+    connection.query(queryStateSelect, [object.state], (err, stateRows) => {
+      if (err) return res.status(500).json({ error: err });
 
-    //query per vedere se la categoria inserita è esistente, 
-    connection.query(queryCategories, (err, resp) => {
-        const arrayCategories = resp;
-        if (object.category === arrayCategories[0].name || object.category === arrayCategories[1].name || object.category === arrayCategories[2].name) {
+      const handleStateId = (stateId) => {
+        const slugPlatforms = slugify(object.platform, { lower: true, replacement: "_" });
 
-            if (object.category === "Videogiochi") {
-                object.category = arrayCategories[0].id
-            } else if (object.category === "Console") {
-                object.category = arrayCategories[1].id
-            } else if (object.category === "Accessori") {
-                object.category = arrayCategories[2].id
-            }
-        } else {
-            object.category = "categoria non valida"
-            return
-        }
-    })
-    //query per aggiungere lo stato del prodotto inserito
-    connection.query(queryStates, [object.state], [object.state_description], (err, resp) => {
-        
-    })
+        // PLATFORM: prendo id se esiste, altrimenti inserisco
+        connection.query(queryPlatformSelect, [slugPlatforms], (err, platformRows) => {
+          if (err) return res.status(500).json({ error: err });
 
-    connection.query(`SELECT states.id FROM states WHERE `, (err, resp) => {
-         if (err) res.json({
-            message: "errore ask to loris",
-            errore: err,
+          const handlePlatformId = (platformId) => {
+            const slugProduct = slugify(object.name, { lower: true, replacement: "_" });
 
-        })
-        const stateArray = resp
-        object.state = stateArray[0]
-    })
+            connection.query(
+              queryProduct,
+              [
+                object.name,
+                slugProduct,
+                object.cover_image,
+                platformId,
+                object.category,
+                object.description,
+                parseFloat(object.price),
+                stateId,
+                object.conditions_description,
+                object.discounted_price,
+                object.stock,
+                object.production_year
+              ],
+              (err, dbResp) => {
+                if (err) return res.status(500).json({ error: err });
 
-    //creazione slug per la piattaforma 
-    const slugPlatforms = slugify(object.platform, {
-        lower: true,
-        replacement: "_"
-    })
-    //query per aggiungere la piattaforma inserita al database
-    connection.query(queryPlatform, [object.platform], [slugPlatforms], [object.brand], (err, resp) => {
-        if (err) res.json({
-            message: "errore ask to loris",
-            errore: err,
+                return res.status(200).json({
+                  stato: "nuovo prodotto aggiunto",
+                  nuovo_prodotto: { ...object, platform: platformId, state: stateId }
+                });
+              }
+            );
+          };
 
-        })
-    })
+          if (platformRows.length > 0) {
+            handlePlatformId(platformRows[0].id);
+          } else {
+            connection.query(
+              queryPlatformInsert,
+              [object.platform, slugPlatforms, object.brand],
+              (err) => {
+                if (err) return res.status(500).json({ error: err });
+                connection.query(queryPlatformSelect, [slugPlatforms], (err, rows2) => {
+                  if (err) return res.status(500).json({ error: err });
+                  handlePlatformId(rows2[0].id);
+                });
+              }
+            );
+          }
+        });
+      };
 
-    //prelevo l'id della piattaforma aggiunta 
-    connection.query(`SELECT platforms.id FROM platforms WHERE platforms.slug = ${slugPlatforms}`, (err, resp) => {
-
-        object.platform = resp
-    })
-
-
-    //creo lo slug per il prodotto aggiunto 
-    const slugProduct = slugify(object.name, {
-        lower: true,
-        replacement: "_"
-    })
-
-    connection.query(queryProduct, [object.name], [slugProduct], [object.cover_image], [object.platform], [object.category], [object.description], [parseInt(object.price)], [object.state], [object.conditions_description], [object.discounted_price], [object.stock], [object.production_year], (err, resp) =>{
-        if (err) res.json({
-            message: "errore ask to loris",
-            errore: err,
-
-        })
-
-        resp.status(200)
-        resp.json({
-            stato: "nuovo prodotto aggiunto",
-            nuovo_prodotto: object
-        })
-    })
-
+      if (stateRows.length > 0) {
+        handleStateId(stateRows[0].id);
+      } else {
+        connection.query(queryStateInsert, [object.state, object.state_description], (err) => {
+          if (err) return res.status(500).json({ error: err });
+          connection.query(queryStateSelect, [object.state], (err, rows2) => {
+            if (err) return res.status(500).json({ error: err });
+            handleStateId(rows2[0].id);
+          });
+        });
+      }
+    });
+  });
 };
+   
+
+
+
+
 
 
 function update(req, res) {
