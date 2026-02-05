@@ -8,19 +8,22 @@ const router = express.Router();
 //INDEX
 router.get("/", controller.index)
 
- //SHOW
-  router.get("/:slug",controller.show)
+//SHOW
+router.get("/:slug", controller.show)
 
 // //STORE
 router.post("/", controller.store)
 
- //UPDATE
-  router.put('/:slug', controller.update);
+//UPDATE
+router.put('/:slug', controller.update);
 
 // //MODIFY
-// router.patch()
+router.patch('/:slug', controller.modify)
 
 // //DESTROY
 router.delete("/:id", controller.destroy)
+
+// create purchase
+router.post("/cart", controller.storePurchase)
 
 export default router;
