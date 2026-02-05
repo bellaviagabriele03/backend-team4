@@ -1,6 +1,6 @@
 import slugify from "slugify"
 import connection from "../database/databaseConnection.js"
-
+import Joi from "joi"
 
 //INDEX
 function index(req, res) {
@@ -86,119 +86,152 @@ function show(req, res) {
 }
 //STORE
 const store = (req, res) => {
-  const object = {
-    name: req.body.name,
-    description: req.body.description,
-    platform: req.body.platform,
-    price: req.body.price,
-    state: req.body.state,
-    state_description: req.body.state_description,
-    conditions_description: req.body.conditions_description,
-    stock: req.body.stock,
-    production_year: req.body.production_year,
-    cover_image: req.body.cover_image,
-    discounted_price: req.body.discounted_price,
-    brand: req.body.brand,
-    category: req.body.category
-  };
+    const object = {
+        name: req.body.name,
+        description: req.body.description,
+        platform: req.body.platform,
+        price: req.body.price,
+        state: req.body.state,
+        state_description: req.body.state_description,
+        conditions_description: req.body.conditions_description,
+        stock: req.body.stock,
+        production_year: req.body.production_year,
+        cover_image: req.body.cover_image,
+        discounted_price: req.body.discounted_price,
+        brand: req.body.brand,
+        category: req.body.category
+    };
 
-  const queryProduct = `
+
+    const schema = Joi.object({
+        name: Joi.string().min(3).required(),
+        description: Joi.string().min(10).required(),
+        platform: Joi.string().required(),
+        category: Joi.string().required(),
+
+        price: Joi.number().positive().required(),
+        discounted_price: Joi.number().positive().allow(null),
+
+        stock: Joi.number().integer().min(0).required(),
+        production_year: Joi.number().integer().min(1950).max(new Date().getFullYear()),
+
+        state: Joi.string().required(),
+        state_description: Joi.string().allow(""),
+
+        conditions_description: Joi.string().allow(""),
+        cover_image: Joi.string().uri().allow(null),
+
+        brand: Joi.string().required()
+    });
+
+    const { error } = schema.validate(object);
+
+    if (error) {
+        return res.status(400).json({
+            error: error.details[0].message
+        });
+    }
+
+
+
+
+    const queryProduct = `
     INSERT INTO products
     (name, slug, cover_image, platform_id, category_id, description, price, state_id, conditions_description, discounted_price, stock, production_year, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
   `;
 
-  const queryPlatformInsert = `
+    const queryPlatformInsert = `
     INSERT INTO platforms (name, slug, brand, created_at, updated_at)
     VALUES (?, ?, ?, NOW(), NOW())
   `;
 
-  const queryPlatformSelect = `SELECT id FROM platforms WHERE slug = ?`;
-  const queryCategories = `SELECT * FROM categories`;
-  const queryStateInsert = `INSERT INTO states (name, description) VALUES (?, ?)`;
-  const queryStateSelect = `SELECT id FROM states WHERE name = ?`;
+    const queryPlatformSelect = `SELECT id FROM platforms WHERE slug = ?`;
+    const queryCategories = `SELECT * FROM categories`;
+    const queryStateInsert = `INSERT INTO states (name, description) VALUES (?, ?)`;
+    const queryStateSelect = `SELECT id FROM states WHERE name = ?`;
 
-  connection.query(queryCategories, (err, categories) => {
-    if (err) return res.status(500).json({ error: err });
+    connection.query(queryCategories, (err, categories) => {
+        if (err) return res.status(500).json({ error: err });
 
-    const found = categories.find(c => c.name === object.category);
-    if (!found) return res.status(400).json({ error: "categoria non valida" });
-    object.category = found.id;
+        const found = categories.find(c => c.name === object.category);
+        if (!found) return res.status(400).json({ error: "categoria non valida" });
+        object.category = found.id;
 
-    // STATE: prendo id se esiste, altrimenti inserisco
-    connection.query(queryStateSelect, [object.state], (err, stateRows) => {
-      if (err) return res.status(500).json({ error: err });
-
-      const handleStateId = (stateId) => {
-        const slugPlatforms = slugify(object.platform, { lower: true, replacement: "_" });
-
-        // PLATFORM: prendo id se esiste, altrimenti inserisco
-        connection.query(queryPlatformSelect, [slugPlatforms], (err, platformRows) => {
-          if (err) return res.status(500).json({ error: err });
-
-          const handlePlatformId = (platformId) => {
-            const slugProduct = slugify(object.name, { lower: true, replacement: "_" });
-
-            connection.query(
-              queryProduct,
-              [
-                object.name,
-                slugProduct,
-                object.cover_image,
-                platformId,
-                object.category,
-                object.description,
-                parseFloat(object.price),
-                stateId,
-                object.conditions_description,
-                object.discounted_price,
-                object.stock,
-                object.production_year
-              ],
-              (err, dbResp) => {
-                if (err) return res.status(500).json({ error: err });
-
-                return res.status(200).json({
-                  stato: "nuovo prodotto aggiunto",
-                  nuovo_prodotto: { ...object, platform: platformId, state: stateId }
-                });
-              }
-            );
-          };
-
-          if (platformRows.length > 0) {
-            handlePlatformId(platformRows[0].id);
-          } else {
-            connection.query(
-              queryPlatformInsert,
-              [object.platform, slugPlatforms, object.brand],
-              (err) => {
-                if (err) return res.status(500).json({ error: err });
-                connection.query(queryPlatformSelect, [slugPlatforms], (err, rows2) => {
-                  if (err) return res.status(500).json({ error: err });
-                  handlePlatformId(rows2[0].id);
-                });
-              }
-            );
-          }
-        });
-      };
-
-      if (stateRows.length > 0) {
-        handleStateId(stateRows[0].id);
-      } else {
-        connection.query(queryStateInsert, [object.state, object.state_description], (err) => {
-          if (err) return res.status(500).json({ error: err });
-          connection.query(queryStateSelect, [object.state], (err, rows2) => {
+        // STATE: prendo id se esiste, altrimenti inserisco
+        connection.query(queryStateSelect, [object.state], (err, stateRows) => {
             if (err) return res.status(500).json({ error: err });
-            handleStateId(rows2[0].id);
-          });
+
+            const handleStateId = (stateId) => {
+                const slugPlatforms = slugify(object.platform, { lower: true, replacement: "_" });
+
+                // PLATFORM: prendo id se esiste, altrimenti inserisco
+                connection.query(queryPlatformSelect, [slugPlatforms], (err, platformRows) => {
+                    if (err) return res.status(500).json({ error: err });
+
+                    const handlePlatformId = (platformId) => {
+                        const slugProduct = slugify(object.name, { lower: true, replacement: "_" });
+
+                        connection.query(
+                            queryProduct,
+                            [
+                                object.name,
+                                slugProduct,
+                                object.cover_image,
+                                platformId,
+                                object.category,
+                                object.description,
+                                parseFloat(object.price),
+                                stateId,
+                                object.conditions_description,
+                                object.discounted_price,
+                                object.stock,
+                                object.production_year
+                            ],
+                            (err, dbResp) => {
+                                if (err) return res.status(500).json({ error: err });
+
+                                return res.status(200).json({
+                                    stato: "nuovo prodotto aggiunto",
+                                    nuovo_prodotto: { ...object, platform: platformId, state: stateId }
+                                });
+                            }
+                        );
+                    };
+
+                    if (platformRows.length > 0) {
+                        handlePlatformId(platformRows[0].id);
+                    } else {
+                        connection.query(
+                            queryPlatformInsert,
+                            [object.platform, slugPlatforms, object.brand],
+                            (err) => {
+                                if (err) return res.status(500).json({ error: err });
+                                connection.query(queryPlatformSelect, [slugPlatforms], (err, rows2) => {
+                                    if (err) return res.status(500).json({ error: err });
+                                    handlePlatformId(rows2[0].id);
+                                });
+                            }
+                        );
+                    }
+                });
+            };
+
+            if (stateRows.length > 0) {
+                handleStateId(stateRows[0].id);
+            } else {
+                connection.query(queryStateInsert, [object.state, object.state_description], (err) => {
+                    if (err) return res.status(500).json({ error: err });
+                    connection.query(queryStateSelect, [object.state], (err, rows2) => {
+                        if (err) return res.status(500).json({ error: err });
+                        handleStateId(rows2[0].id);
+                    });
+                });
+            }
         });
-      }
     });
-  });
 };
-   
+
 
 
 
