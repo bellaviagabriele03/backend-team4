@@ -23,4 +23,7 @@ router.patch('/:slug', controller.modify)
 // //DESTROY
 router.delete("/:id", controller.destroy)
 
+// create purchase
+router.post("/cart", controller.storePurchase)
+
 export default router;
