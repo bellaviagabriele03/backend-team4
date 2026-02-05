@@ -18,10 +18,10 @@ router.post("/", controller.store)
 router.put('/:slug', controller.update);
 
 // //MODIFY
-router.patch('/:slug', controller.modify)
+// router.patch('/:slug', controller.modify)
 
 // //DESTROY
-router.delete("/:id", controller.destroy)
+router.delete("/:slug", controller.destroy)
 
 // create purchase
 router.post("/cart", controller.storePurchase)

@@ -383,7 +383,7 @@ function update(req, res) {
 
 //DESTROY
 const destroy = (req, res) => {
-    connection.query('DELETE FROM products WHERE id = ?', [req.params.id], (err, result) => {
+    connection.query('DELETE FROM products WHERE slug = ?', [req.params.slug], (err, result) => {
         if (err) {
             return res.status(500).json({ success: false, error: err.message });
         }
