@@ -307,74 +307,80 @@ function update(req, res) {
 
 
 
-//MODIFY
-function modify(req, res) {
-    const slug = req.params.slug;
+//MODIFY COMMENTATA NON PIU' UTILIZZATA NEL CASO DOVESSE SERVIRE....................
 
-    const campiModificabili = [
-        'description',
-        'price',
-        'discounted_price',
-        'stock'
-    ];
+// function modify(req, res) {
+//     const slug = req.params.slug;
 
-    const aggiornamenti = [];
-    const parametri = [];
+//     const campiModificabili = [
+//         'description',
+//         'price',
+//         'discounted_price',
+//         'stock'
+//     ];
 
-    campiModificabili.forEach(campo => {
-        if (req.body.hasOwnProperty(campo)) {
-            aggiornamenti.push(`${campo} = ?`);
-            parametri.push(req.body[campo]);
-        }
-    });
+//     const aggiornamenti = [];
+//     const parametri = [];
 
-    if (aggiornamenti.length === 0) {
-        return res.status(400).json({
-            success: false,
-            error: 'Nessun campo da aggiornare. Campi modificabili: description, price, discounted_price, stock'
-        });
-    }
+//     campiModificabili.forEach(campo => {
+//         if (req.body.hasOwnProperty(campo)) {
+//             aggiornamenti.push(`${campo} = ?`);
+//             parametri.push(req.body[campo]);
+//         }
+//     });
 
-    aggiornamenti.push('updated_at = NOW()');
+//     if (aggiornamenti.length === 0) {
+//         return res.status(400).json({
+//             success: false,
+//             error: 'Nessun campo da aggiornare. Campi modificabili: description, price, discounted_price, stock'
+//         });
+//     }
 
-    parametri.push(slug);
+//     aggiornamenti.push('updated_at = NOW()');
 
-    const query = `UPDATE products SET ${aggiornamenti.join(', ')} WHERE slug = ?`;
+//     parametri.push(slug);
 
-    connection.query(query, parametri, (err, result) => {
-        if (err) {
-            return res.status(500).json({
-                success: false,
-                error: err.message
-            });
-        }
+//     const query = `UPDATE products SET ${aggiornamenti.join(', ')} WHERE slug = ?`;
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({
-                success: false,
-                error: 'Prodotto non trovato'
-            });
-        }
+//     connection.query(query, parametri, (err, result) => {
+//         if (err) {
+//             return res.status(500).json({
+//                 success: false,
+//                 error: err.message
+//             });
+//         }
+
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({
+//                 success: false,
+//                 error: 'Prodotto non trovato'
+//             });
+//         }
 
 
-        connection.query(
-            'SELECT * FROM products WHERE slug = ?',
-            [slug],
-            (err2, results) => {
-                if (err2) {
-                    return res.status(500).json({
-                        success: false,
-                        error: err2.message
-                    });
-                }
-                res.status(200).json({
-                    success: true,
-                    data: results[0]
-                });
-            }
-        );
-    });
-}
+//         connection.query(
+//             'SELECT * FROM products WHERE slug = ?',
+//             [slug],
+//             (err2, results) => {
+//                 if (err2) {
+//                     return res.status(500).json({
+//                         success: false,
+//                         error: err2.message
+//                     });
+//                 }
+//                 res.status(200).json({
+//                     success: true,
+//                     data: results[0]
+//                 });
+//             }
+//         );
+//     });
+// }
+//NEL CASO IN CUI DOVESSE SERVIRE...........................................................
+
+
+
+
 //DESTROY
 const destroy = (req, res) => {
     connection.query('DELETE FROM products WHERE id = ?', [req.params.id], (err, result) => {
@@ -540,7 +546,6 @@ const controller = {
     show,
     store,
     update,
-    modify,
     destroy,
     storePurchase
 }
