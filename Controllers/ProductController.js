@@ -101,14 +101,45 @@ const store = (req, res) => {
     } = req.body;
 
 
-   
+    if (!name?.trim() === true) {
+    return res.status(400).json({ success: false, error: 'Name obbligatorio e non vuoto' });
+}
+if (!slug?.trim() === true) { 
+    return res.status(400).json({success:false, error: "lo slug è obbligatorio e non deve essere vuoto"})
+}
 
-    if (!name || !slug || !platform_id || !category_id || !price || !state_id || stock == null) {
-        return res.status(400).json({
-            success: false,
-            error: 'name, slug, platform_id, category_id, price, state_id e stock sono obbligatori'
-        });
-    }
+const priceNum = Number(price);
+if (isNaN(priceNum) || priceNum < 1) { return res.status(400).json({ success:false,error:"il prezzo deve essere un numero non inferiore a zero" }) }
+
+if (!platform_id) {
+    return res.status(400).json({
+        success: false,
+        error: 'Il campo "platform_id" è obbligatorio'
+    });
+}
+if (!category_id) {
+    return res.status(400).json({
+        success: false,
+        error: 'Il campo "category_id" è obbligatorio'
+    });
+}
+
+if (!state_id) {
+    return res.status(400).json({
+        success: false,
+        error: 'Il campo "state_id" è obbligatorio'
+    });
+}
+if (stock == undefined || stock < 1 ) {
+    return res.status(400).json({
+        success: false,
+        error: 'Il campo "stock" è obbligatorio, e inoltre il numero non deve essere minore di zero'
+    });
+}
+
+// Tutti i campi OK: procedi con la logica di successo
+// (nessun else necessario)
+
 
     connection.query(
         `INSERT INTO products (
