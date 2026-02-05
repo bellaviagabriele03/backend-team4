@@ -1,5 +1,6 @@
+import slugify from "slugify"
 import connection from "../database/databaseConnection.js"
-
+import Joi from "joi"
 
 //INDEX
 function index(req, res) {
@@ -83,106 +84,147 @@ function show(req, res) {
     //
 
 }
-//STORE
+//STORE --FINAL 
 const store = (req, res) => {
-    const {
-        name,
-        slug,
-        platform_id,
-        category_id,
-        description,
-        price,
-        state_id,
-        conditions_description,
-        stock,
-        production_year,
-        cover_image,
-        discounted_price
-    } = req.body;
+    const object = {
+        name: req.body.name,
+        description: req.body.description,
+        platform: req.body.platform,
+        price: req.body.price,
+        state: req.body.state,
+        state_description: req.body.state_description,
+        conditions_description: req.body.conditions_description,
+        stock: req.body.stock,
+        production_year: req.body.production_year,
+        cover_image: req.body.cover_image,
+        discounted_price: req.body.discounted_price,
+        brand: req.body.brand,
+        category: req.body.category
+    };
 
 
-    if (!name?.trim() === true) {
-    return res.status(400).json({ success: false, error: 'Name obbligatorio e non vuoto' });
-}
-if (!slug?.trim() === true) { 
-    return res.status(400).json({success:false, error: "lo slug è obbligatorio e non deve essere vuoto"})
-}
+    const schema = Joi.object({
+        name: Joi.string().min(3).required(),
+        description: Joi.string().min(10).required(),
+        platform: Joi.string().required(),
+        category: Joi.string().required(),
 
-const priceNum = Number(price);
-if (isNaN(priceNum) || priceNum < 1) { return res.status(400).json({ success:false,error:"il prezzo deve essere un numero non inferiore a zero" }) }
+        price: Joi.number().positive().required(),
+        discounted_price: Joi.number().positive().allow(null),
 
-if (!platform_id) {
-    return res.status(400).json({
-        success: false,
-        error: 'Il campo "platform_id" è obbligatorio'
+        stock: Joi.number().integer().min(0).required(),
+        production_year: Joi.number().integer().min(1950).max(new Date().getFullYear()),
+
+        state: Joi.string().required(),
+        state_description: Joi.string().allow(""),
+
+        conditions_description: Joi.string().allow(""),
+        cover_image: Joi.string().uri().allow(null),
+
+        brand: Joi.string().required()
     });
-}
-if (!category_id) {
-    return res.status(400).json({
-        success: false,
-        error: 'Il campo "category_id" è obbligatorio'
-    });
-}
 
-if (!state_id) {
-    return res.status(400).json({
-        success: false,
-        error: 'Il campo "state_id" è obbligatorio'
-    });
-}
-if (stock == undefined || stock < 1 ) {
-    return res.status(400).json({
-        success: false,
-        error: 'Il campo "stock" è obbligatorio, e inoltre il numero non deve essere minore di zero'
-    });
-}
+    const { error } = schema.validate(object);
 
-// Tutti i campi OK: procedi con la logica di successo
-// (nessun else necessario)
+    if (error) {
+        return res.status(400).json({
+            error: error.details[0].message
+        });
+    }
+    const queryProduct = `
+    INSERT INTO products
+    (name, slug, cover_image, platform_id, category_id, description, price, state_id, conditions_description, discounted_price, stock, production_year, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+  `;
 
+    const queryPlatformInsert = `
+    INSERT INTO platforms (name, slug, brand, created_at, updated_at)
+    VALUES (?, ?, ?, NOW(), NOW())
+  `;
 
-    connection.query(
-        `INSERT INTO products (
-            name, slug, cover_image, platform_id, category_id, 
-            description, price, state_id, conditions_description, 
-            discounted_price, stock, production_year, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [
-            name,
-            slug,
-            cover_image || '',
-            platform_id,
-            category_id,
-            description || null,
-            price,
-            state_id,
-            conditions_description || null,
-            discounted_price || null,
-            stock,
-            production_year || null
-        ],
-        (err, result) => {
-            if (err) {
-                return res.status(500).json({ success: false, error: err.message });
-            }
+    const queryPlatformSelect = `SELECT id FROM platforms WHERE slug = ?`;
+    const queryCategories = `SELECT * FROM categories`;
+    const queryStateInsert = `INSERT INTO states (name, description) VALUES (?, ?)`;
+    const queryStateSelect = `SELECT id FROM states WHERE name = ?`;
 
-            const nuovoId = result.insertId;
+    connection.query(queryCategories, (err, categories) => {
+        if (err) return res.status(500).json({ error: err });
+        const found = categories.find(c => c.name === object.category);
+        if (!found) return res.status(400).json({ error: "categoria non valida" });
+        object.category = found.id;
 
-            connection.query(
-                'SELECT * FROM products WHERE id = ?',
-                [nuovoId],
-                (err2, results) => {
-                    if (err2) {
-                        return res.status(500).json({ success: false, error: err2.message });
+        connection.query(queryStateSelect, [object.state], (err, stateRows) => {
+            if (err) return res.status(500).json({ error: err });
+
+            const handleStateId = (stateId) => {
+                const slugPlatforms = slugify(object.platform, { lower: true, replacement: "_" });
+
+                connection.query(queryPlatformSelect, [slugPlatforms], (err, platformRows) => {
+                    if (err) return res.status(500).json({ error: err });
+
+                    const handlePlatformId = (platformId) => {
+                        const slugProduct = slugify(object.name, { lower: true, replacement: "_" });
+
+                        connection.query(
+                            queryProduct,
+                            [
+                                object.name,
+                                slugProduct,
+                                object.cover_image,
+                                platformId,
+                                object.category,
+                                object.description,
+                                parseFloat(object.price),
+                                stateId,
+                                object.conditions_description,
+                                object.discounted_price,
+                                object.stock,
+                                object.production_year
+                            ],
+                            (err, dbResp) => {
+                                if (err) return res.status(500).json({ error: err });
+
+                                return res.status(200).json({
+                                    stato: "nuovo prodotto aggiunto",
+                                    nuovo_prodotto: { ...object, platform: platformId, state: stateId }
+                                });
+                            }
+                        );
+                    };
+
+                    if (platformRows.length > 0) {
+                        handlePlatformId(platformRows[0].id);
+                    } else {
+                        connection.query(
+                            queryPlatformInsert,
+                            [object.platform, slugPlatforms, object.brand],
+                            (err) => {
+                                if (err) return res.status(500).json({ error: err });
+                                connection.query(queryPlatformSelect, [slugPlatforms], (err, rows2) => {
+                                    if (err) return res.status(500).json({ error: err });
+                                    handlePlatformId(rows2[0].id);
+                                });
+                            }
+                        );
                     }
-                    res.status(201).json({ success: true, data: results[0] });
-                }
-            );
-        }
-    );
+                });
+            };
+
+            if (stateRows.length > 0) {
+                handleStateId(stateRows[0].id);
+            } else {
+                connection.query(queryStateInsert, [object.state, object.state_description], (err) => {
+                    if (err) return res.status(500).json({ error: err });
+                    connection.query(queryStateSelect, [object.state], (err, rows2) => {
+                        if (err) return res.status(500).json({ error: err });
+                        handleStateId(rows2[0].id);
+                    });
+                });
+            }
+        });
+    });
 };
-
-
+//UPDATE --
 function update(req, res) {
     console.log('METHOD:', req.method);
     console.log('URL:', req.url);
