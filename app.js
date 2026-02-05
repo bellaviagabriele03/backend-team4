@@ -1,5 +1,6 @@
 import express from "express"
 import router from "./Routers/Products.js";
+import orderRouter from "./Routers/Orders.js";
 import cors from "cors"
 import routeNotFound from "./MiddleWares/routeNotFound.js";
 
@@ -14,6 +15,7 @@ app.use(cors({
 app.use(express.json())
 
 app.use("/retro/api/products", router)
+app.use("/retro/api/orders", orderRouter)
 
 
 
