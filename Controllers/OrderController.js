@@ -82,14 +82,14 @@ const createOrder = async (req, res) => {
 
         // 2. Inserisci i prodotti nella tabella purchase_product
         const insertProductQuery = `
-            INSERT INTO purchase_product (
-                purchase_id,
-                product_id,
-                quantity,
-                unit_price,
-                total_price
-            ) VALUES (?, ?, ?, ?, ?)
-        `;
+  INSERT INTO purchase_product (
+    purchase_id,
+    product_id,
+    quantity,
+    unit_price,
+    total_price
+  ) VALUES (?, ?, ?, ?, ?)
+`;
 
         for (const item of cart) {
             const itemTotal = item.quantity * item.unit_price;
