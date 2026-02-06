@@ -50,7 +50,7 @@ function index(req, res) {
 //SHOW
 function show(req, res) {
     const slug = req.params.slug
-    const query = "SELECT products.name, products.slug, products.description, products.cover_image, products.price, products.conditions_description, products.discounted_price, products.stock, products.production_year, platforms.name as platform, platforms.brand as brand, categories.name as category, states.name as state, states.description as state_description  FROM `products` INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `states` ON products.state_id = states.id WHERE products.slug = ?"
+    const query = "SELECT products.id, products.name, products.slug, products.description, products.cover_image, products.price, products.conditions_description, products.discounted_price, products.stock, products.production_year, platforms.name as platform, platforms.brand as brand, categories.name as category, states.name as state, states.description as state_description FROM `products` INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `states` ON products.state_id = states.id WHERE products.slug = ?"
 
     //query per prelevare il singolo prodotto 
     connection.query(query, [slug], (err, result) => {
