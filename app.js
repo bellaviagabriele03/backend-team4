@@ -14,6 +14,8 @@ app.use(cors({
 
 app.use(express.json())
 
+app.use('/images', express.static('public/images'))
+
 app.use("/retro/api/products", router)
 app.use("/retro/api/orders", orderRouter)
 
