@@ -176,6 +176,8 @@ const confirmOrder = async (req, res) => {
         const getProductsQuery = `
             SELECT pp.quantity, pp.unit_price, pp.total_price,
                    prod.name as product_name,
+                   prod.price as original_price,
+                   prod.discounted_price,
                    plat.name as platform_name,
                    cat.name as category_name
             FROM purchase_product pp
@@ -338,6 +340,8 @@ const createOrder = async (req, res) => {
         const getProductsQuery = `
             SELECT pp.quantity, pp.unit_price, pp.total_price,
                    prod.name as product_name,
+                   prod.price as original_price,
+                   prod.discounted_price,
                    plat.name as platform_name,
                    cat.name as category_name
             FROM purchase_product pp
