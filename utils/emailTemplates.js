@@ -1,6 +1,6 @@
 // ORDINE DEL CLIENTE
 export const confermaOrdineCliente = (purchase, prodotti) => {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -16,6 +16,9 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
         .total { font-size: 20px; font-weight: bold; color: #4CAF50; margin-top: 20px; padding-top: 15px; border-top: 2px solid #4CAF50; }
         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
         .address { background-color: #e8f5e9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .original-price { text-decoration: line-through; color: #999; font-size: 0.9em; }
+        .discounted-price { color: #f44336; font-weight: bold; }
+        .discount-badge { background-color: #ff5722; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.85em; margin-left: 5px; }
       </style>
     </head>
     <body>
@@ -41,16 +44,34 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
           
           <div class="info-section">
             <h3>🛍️ Dettagli Ordine:</h3>
-            ${prodotti.map(p => `
+            ${prodotti.map(p => {
+    const originalPrice = parseFloat(p.original_price);
+    const discountedPrice = p.discounted_price ? parseFloat(p.discounted_price) : null;
+    const finalPrice = discountedPrice ? originalPrice - discountedPrice : originalPrice;
+    const unitPriceFromDB = p.unit_price / 100; // Prezzo salvato nel DB (in centesimi)
+    const hasDiscount = discountedPrice && discountedPrice > 0;
+    const discountPercentage = hasDiscount ? Math.round((discountedPrice / originalPrice) * 100) : 0;
+
+    return `
               <div class="product-item">
-                <strong>${p.product_name}</strong><br>
+                <strong>${p.product_name}</strong>
+                ${hasDiscount ? `<span class="discount-badge">-${discountPercentage}%</span>` : ''}
+                <br>
                 <small>Piattaforma: ${p.platform_name || 'N/A'}</small><br>
                 <div class="price-row">
                   <span>Quantità: ${p.quantity}</span>
-                  <span>€${(p.unit_price / 100).toFixed(2)} × ${p.quantity} = €${(p.total_price / 100).toFixed(2)}</span>
+                  <span>
+                    ${hasDiscount
+        ? `<span class="original-price">€${originalPrice.toFixed(2)}</span> 
+                         <span class="discounted-price">€${finalPrice.toFixed(2)}</span>`
+        : `€${originalPrice.toFixed(2)}`
+      }
+                    × ${p.quantity} = <strong>€${(p.total_price / 100).toFixed(2)}</strong>
+                  </span>
                 </div>
               </div>
-            `).join('')}
+                `;
+  }).join('')}
             
             <div class="price-row" style="margin-top: 15px;">
               <span><strong>Spedizione:</strong></span>
@@ -75,7 +96,7 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
 
 // EMAIL DI CONFERMA AGLI ADMIN
 export const notificaOrdineAdmin = (purchase, prodotti) => {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -91,6 +112,10 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
         .total { font-size: 22px; font-weight: bold; color: #FF5722; margin-top: 20px; padding-top: 15px; border-top: 3px solid #FF5722; }
         .urgent { background-color: #fff3e0; padding: 10px; border-radius: 5px; margin: 10px 0; }
         .status { display: inline-block; padding: 5px 15px; border-radius: 20px; background-color: #FFC107; color: white; font-weight: bold; }
+        .original-price { text-decoration: line-through; color: #999; font-size: 0.9em; }
+        .discounted-price { color: #f44336; font-weight: bold; }
+        .discount-badge { background-color: #4CAF50; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.85em; margin-left: 5px; }
+        .profit-info { background-color: #e8f5e9; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 0.9em; }
       </style>
     </head>
     <body>
@@ -107,7 +132,7 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
           <div class="info-box">
             <h3>👤 Informazioni Cliente:</h3>
             <p><strong>Nome:</strong> ${purchase.client_name} ${purchase.client_surname}</p>
-            <p><strong>Email:</strong> ${purchase['e-mail']}</p>
+            <p><strong>Email:</strong> ${purchase.email}</p>
             <p><strong>Telefono:</strong> ${purchase.phone_number}</p>
           </div>
           
@@ -124,16 +149,41 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
           
           <div class="info-box">
             <h3>📦 Prodotti Ordinati:</h3>
-            ${prodotti.map(p => `
+            ${prodotti.map(p => {
+    const originalPrice = parseFloat(p.original_price);
+    const discountedPrice = p.discounted_price ? parseFloat(p.discounted_price) : null;
+    const finalPrice = discountedPrice ? originalPrice - discountedPrice : originalPrice;
+    const unitPriceFromDB = p.unit_price / 100;
+    const hasDiscount = discountedPrice && discountedPrice > 0;
+    const discountPercentage = hasDiscount ? Math.round((discountedPrice / originalPrice) * 100) : 0;
+    const totalDiscount = hasDiscount ? (discountedPrice * p.quantity) : 0;
+
+    return `
               <div class="product-item">
-                <strong>${p.product_name}</strong><br>
+                <strong>${p.product_name}</strong>
+                ${hasDiscount ? `<span class="discount-badge">SCONTO -${discountPercentage}%</span>` : ''}
+                <br>
                 <small>Piattaforma: ${p.platform_name || 'N/A'} | Categoria: ${p.category_name || 'N/A'}</small><br>
                 <div class="price-row">
                   <span>Quantità: ${p.quantity}</span>
-                  <span>€${(p.unit_price / 100).toFixed(2)} × ${p.quantity} = <strong>€${(p.total_price / 100).toFixed(2)}</strong></span>
+                  <span>
+                    ${hasDiscount
+        ? `<span class="original-price">€${originalPrice.toFixed(2)}</span> 
+                         <span class="discounted-price">€${finalPrice.toFixed(2)}</span>`
+        : `€${originalPrice.toFixed(2)}`
+      }
+                    × ${p.quantity} = <strong>€${(p.total_price / 100).toFixed(2)}</strong>
+                  </span>
                 </div>
+                ${hasDiscount ? `
+                <div class="profit-info">
+                  💰 Sconto applicato: €${totalDiscount.toFixed(2)} 
+                  (Prezzo pieno sarebbe stato: €${(originalPrice * p.quantity).toFixed(2)})
+                </div>
+                ` : ''}
               </div>
-            `).join('')}
+                `;
+  }).join('')}
             
             <div class="price-row" style="margin-top: 15px; font-size: 16px;">
               <span><strong>Costo Spedizione:</strong></span>
