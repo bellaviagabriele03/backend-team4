@@ -10,7 +10,9 @@ function index(req, res) {
     const filter = req.query.filter
     const offset = req.query.offset
     const limit = req.query.limit
-
+    const min = req.query.min
+    const max = req.query.max
+    const price = parseInt(req.query.price)
 
     if (categories !== undefined) {
 
@@ -52,6 +54,51 @@ function index(req, res) {
             }
 
         })
+    } else if (min !== undefined && max !== undefined) {
+
+        const queryPrice = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id WHERE products.price > ? AND products.price < ? ORDER BY products.price"
+        connection.query(queryPrice, [min, max], (err, result) => {
+            if (err) {
+                res.status(500)
+                return res.json({
+                    message: "internal server error"
+                })
+            }
+
+            res.json({
+                info: {
+                    count: result.length,
+                    min_price: min,
+                    max_price: max,
+                },
+                results: result
+            })
+        })
+
+
+
+
+    } else if (price !== undefined) {
+        const querySinglePrice = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id WHERE products.price = ? ORDER BY price"
+
+        connection.query(querySinglePrice, [price], (err, result)=>{
+            if(err) {
+                res.status(500)
+                return res.json({
+                    message:"internal server error"
+                })
+            }
+            res.json({
+                info: {
+                    count: result.length,
+                    price: price,
+
+                },
+                results: result
+            })
+        })
+
+
     } else {
         const query = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id"
         connection.query(query, (err, result) => {
