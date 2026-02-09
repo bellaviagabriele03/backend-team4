@@ -6,6 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 //INDEX
 function index(req, res) {
+
     const categories = req.query.categories
     const filter = req.query.filter
     const offset = req.query.offset
@@ -14,89 +15,40 @@ function index(req, res) {
     const max = req.query.max
     const price = parseInt(req.query.price)
 
+
+
+    //INDEX REMASTERED IS BETTER <3<3<3<3<3<3<3
+    let finalQuery = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id"
+    const params = []
     if (categories !== undefined) {
-
-        const query = "SELECT products.id, products.name, products.slug, products.description, products.cover_image, products.price, products.conditions_description, products.discounted_price, products.stock, products.production_year, platforms.name as platform  FROM `products` INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `states` ON products.state_id = states.id WHERE categories.name = ? "
-        connection.query(query, [categories], (err, result) => {
-            if (err) {
-                res.status(500);
-                return res.json({
-                    message: "internal server error"
-                })
-            }
-            res.json({
-                info: {
-                    category: categories,
-                    count: result.length
-                },
-                results: result.length === 0 ? "questa categoria non esiste" : result
-            })
-
-        })
+        finalQuery = "SELECT products.id, products.name, products.slug, products.description, products.cover_image, products.price, products.conditions_description, products.discounted_price, products.stock, products.production_year, platforms.name as platform  FROM `products` INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `states` ON products.state_id = states.id WHERE categories.name = ? "
+        params.push(categories)
     } else if (filter === "discounted") {
-        const queryDiscounted = `SELECT * FROM products WHERE discounted_price IS NOT NULL `;
-        connection.query(queryDiscounted, (err, result) => {
-            if (err) {
-                res.status(500)
-                res.json({
-                    err: err,
-                    message: "errore interno al server"
-                })
-            } else {
-                res.status(200)
-                res.json({
-                    info: {
-                        filter: filter,
-                        count: result.length,
-                    },
-                    results: result
-                })
-            }
-
-        })
+        finalQuery = "SELECT * FROM products WHERE discounted_price IS NOT NULL"
     } else if (min !== undefined && max !== undefined) {
-
-        const queryPrice = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id WHERE products.price > ? AND products.price < ? ORDER BY products.price"
-        connection.query(queryPrice, [min, max], (err, result) => {
-            if (err) {
-                res.status(500)
-                return res.json({
-                    message: "internal server error"
-                })
-            }
-
-            res.json({
-                info: {
-                    count: result.length,
-                    min_price: min,
-                    max_price: max,
-                },
-                results: result
-            })
-        })
-
-
-
-
-    } else {
-        const query = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id"
-        connection.query(query, (err, result) => {
-            if (err) {
-                res.status(500)
-                return res.json({
-                    message: "internal server error"
-                })
-            }
-            res.json({
-                info: {
-                    count: result.length,
-                },
-                results: result
-            })
-        })
+        finalQuery = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id WHERE products.price > ? AND products.price < ? ORDER BY products.price"
+        params.push(min, max)
     }
 
 
+    connection.query(finalQuery, params, (err, result) => {
+        if (err) {
+            res.status(500)
+            return res.json({
+                message: "internal server error !"
+            })
+        }
+        res.json({
+            info: {
+                count: result.length,
+                ...(categories !== undefined ? { category: categories } : {}),
+                ...(filter === "discounted" ? { filter } : {}),
+                ...(min !== undefined && max !== undefined ? { min_price: Number(min), max_price: Number(max) } : {}),
+            },
+            results: result,
+        })
+
+    })
 }
 
 
