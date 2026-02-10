@@ -1,5 +1,6 @@
 import express from "express"
 import router from "./Routers/Products.js";
+import productController from "./Controllers/ProductController.js";
 import orderRouter from "./Routers/Orders.js";
 import cors from "cors"
 import routeNotFound from "./MiddleWares/routeNotFound.js";
@@ -18,6 +19,8 @@ app.use('/images', express.static('public/images'))
 
 app.use("/retro/api/products", router)
 app.use("/retro/api/orders", orderRouter)
+
+app.get("/retro/api/platforms", productController.platformIndex)
 
 
 
