@@ -543,24 +543,6 @@ function storePurchase(req, res) {
 // }
 
 
-function platformIndex(req, res) {
-    connection.query('SELECT * FROM platforms', (err, result) => {
-        if (err) {
-            res.status(500)
-            return res.json({
-                message: "internal server error !"
-            })
-        }
-        res.json({
-            info: {
-                count: result.length,
-            },
-            results: result,
-        })
-
-    })
-}
-
 
 
 const controller = {
@@ -569,8 +551,7 @@ const controller = {
     store,
     update,
     destroy,
-    storePurchase,
-    platformIndex
+    storePurchase
 }
 
 export default controller
