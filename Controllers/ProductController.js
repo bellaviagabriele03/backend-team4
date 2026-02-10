@@ -14,24 +14,49 @@ function index(req, res) {
     const min = req.query.min
     const max = req.query.max
     const price = parseInt(req.query.price)
-    const brand = req.query.brand
+    const platform = req.query.platform
 
 
-    //INDEX REMASTERED IS BETTER <3<3<3<3<3<3<3
-    let finalQuery = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id"
-    const params = []
-    if (categories !== undefined) {
-        finalQuery = "SELECT products.id, products.name, products.slug, products.description, products.cover_image, products.price, products.conditions_description, products.discounted_price, products.stock, products.production_year, platforms.name as platform  FROM `products` INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `states` ON products.state_id = states.id WHERE categories.name = ? "
-        params.push(categories)
-    } else if (filter === "discounted") {
-        finalQuery = "SELECT * FROM products WHERE discounted_price IS NOT NULL"
-    } else if (min !== undefined && max !== undefined) {
-        finalQuery = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id WHERE products.price > ? AND products.price < ? ORDER BY products.price"
-        params.push(min, max)
-    } else if (brand !== undefined) {
-        finalQuery = "SELECT products.id, products.name, products.slug, products.cover_image, platforms.name as platforms, categories.name as category, platforms.brand as brand, products.description, products.price, states.name as state, states.description as state_description, products.conditions_description, products.discounted_price, products.stock, products.production_year FROM `products` INNER JOIN `platforms` ON products.platform_id = platforms.id INNER JOIN `categories` ON products.category_id = categories.id INNER JOIN `states` ON products.state_id = states.id WHERE platforms.brand = ?"
-        params.push(brand)
+    //INDEX L'HO DOVUTA CAMBIARE PERCHE' ALTRIMENTI NON POTEVO FARE IL FILTRO PER PREZZO E PER LA PIATTAFORMA CONTEMPORANEAMENTE SORRY <3
+    let finalQuery = `
+        SELECT products.id, products.name, products.slug, products.cover_image,
+        platforms.name as platforms, categories.name as category,
+        products.description, products.price,
+        states.name as state, states.description as state_description,
+        products.conditions_description, products.discounted_price,
+        products.stock, products.production_year
+        FROM products
+        INNER JOIN platforms ON products.platform_id = platforms.id
+        INNER JOIN categories ON products.category_id = categories.id
+        INNER JOIN states ON products.state_id = states.id
+        WHERE 1 = 1`;
+
+    const params = [];
+
+    // CATEGORY FILTER
+    if (categories !== undefined && categories !== "") {
+        finalQuery += " AND categories.name = ?";
+        params.push(categories);
     }
+
+    // DISCOUNT FILTER
+    if (filter === "discounted") {
+        finalQuery += " AND products.discounted_price IS NOT NULL";
+    }
+
+    // PRICE FILTER
+    if (min !== undefined && max !== undefined) {
+        finalQuery += " AND products.price >= ? AND products.price <= ?";
+        params.push(min, max);
+    }
+
+    // PLATFORM FILTER
+    if (platform !== undefined && platform !== "") {
+        finalQuery += " AND LOWER(platforms.name) LIKE LOWER(?)";
+        params.push(`%${platform.replace(/\+/g, " ")}%`);
+    }
+
+    finalQuery += " ORDER BY products.price ASC";
 
 
     connection.query(finalQuery, params, (err, result) => {
@@ -47,7 +72,7 @@ function index(req, res) {
                 ...(categories !== undefined ? { category: categories } : {}),
                 ...(filter === "discounted" ? { filter } : {}),
                 ...(min !== undefined && max !== undefined ? { min_price: Number(min), max_price: Number(max) } : {}),
-                ...(brand !== undefined ? { brands: brand } : {})
+                ...(platform !== undefined ? { platform: platform } : {})
             },
             results: result,
         })
@@ -106,7 +131,7 @@ const store = (req, res) => {
         production_year: req.body.production_year,
         cover_image: req.body.cover_image,
         discounted_price: req.body.discounted_price,
-        brand: req.body.brand,
+        platform: req.body.platform,
         category: req.body.category
     };
 
@@ -129,7 +154,7 @@ const store = (req, res) => {
         conditions_description: Joi.string().allow(""),
         cover_image: Joi.string().uri().allow(null),
 
-        brand: Joi.string().required()
+        platform: Joi.string().required()
     });
 
     const { error } = schema.validate(object);
