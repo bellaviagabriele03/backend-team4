@@ -26,7 +26,5 @@ router.delete("/:slug", controller.destroy)
 // create purchase
 router.post("/cart", controller.storePurchase)
 
-// platfoms names index
-router.get("/platforms", controller.platformIndex)
 
 export default router;
