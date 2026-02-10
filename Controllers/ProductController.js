@@ -405,7 +405,7 @@ const destroy = (req, res) => {
 
 // LA SCRIVO QUI MA SARA' DA SPOSTARE IN UN SUO CONTROLLER
 
-async function storePurchase(req, res) {
+function storePurchase(req, res) {
     const {
         client_name,
         client_surname,
@@ -421,7 +421,6 @@ async function storePurchase(req, res) {
         products
     } = req.body;
 
-    // VALIDATION
     if (
         !client_name || !client_surname || !email ||
         !billing_address || !billing_postal_code || !billing_city ||
@@ -435,86 +434,81 @@ async function storePurchase(req, res) {
         });
     }
 
-    try {
-        // FETCH PRODUCT PRICES
-        const productIds = products.map(p => p.product_id);
-        const priceQuery = `
-            SELECT id, price, discounted_price 
-            FROM products 
-            WHERE id IN (?)
-        `;
+    const productIds = products.map(p => p.product_id);
+    const priceQuery = `
+        SELECT id, price, discounted_price FROM products WHERE id IN (?)`;
 
-        connection.query(priceQuery, [productIds], async (err, priceRows) => {
-            if (err) return res.status(500).json({ success: false, error: err.message });
+    connection.query(priceQuery, [productIds], (err, priceRows) => {
+        if (err) {
+            return res.status(500).json({ success: false, error: err.message });
+        }
 
-            if (priceRows.length !== products.length) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Invalid product IDs"
-                });
-            }
-
-            // BUILD LINE ITEMS FOR STRIPE
-            const line_items = products.map(p => {
-                const dbProduct = priceRows.find(r => r.id === p.product_id);
-                const unitPrice = dbProduct.discounted_price || dbProduct.price;
-
-                return {
-                    price_data: {
-                        currency: "eur",
-                        product_data: {
-                            name: `Product #${p.product_id}`
-                        },
-                        unit_amount: Math.round(unitPrice * 100)
-                    },
-                    quantity: p.quantity
-                };
+        if (priceRows.length !== products.length) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid product IDs"
             });
+        }
 
-            // ADD SHIPPING
-            if (shipping_price > 0) {
-                line_items.push({
-                    price_data: {
-                        currency: "eur",
-                        product_data: { name: "Shipping" },
-                        unit_amount: Math.round(shipping_price * 100)
+        const line_items = products.map(p => {
+            const dbProduct = priceRows.find(r => r.id === p.product_id);
+            const unitPrice = dbProduct.discounted_price || dbProduct.price;
+
+            return {
+                price_data: {
+                    currency: "eur",
+                    product_data: {
+                        name: `Product #${p.product_id}`
                     },
-                    quantity: 1
-                });
-            }
-
-            // CREATE STRIPE CHECKOUT SESSION
-            const session = await stripe.checkout.sessions.create({
-                payment_method_types: ["card"],
-                mode: "payment",
-                customer_email: email,
-                line_items,
-                success_url: "http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}",
-                cancel_url: "http://localhost:5173/checkout",
-                metadata: {
-                    client_name,
-                    client_surname,
-                    email,
-                    phone_number,
-                    billing_address,
-                    billing_postal_code,
-                    billing_city,
-                    shipping_address,
-                    shipping_postal_code,
-                    shipping_city,
-                    shipping_price
-                }
-            });
-
-            // RETURN SESSION URL TO FRONTEND
-            res.json({ url: session.url });
+                    unit_amount: Math.round(unitPrice * 100)
+                },
+                quantity: p.quantity
+            };
         });
 
-    } catch (error) {
-        console.error("Stripe error:", error);
-        res.status(500).json({ success: false, error: "Stripe session creation failed" });
-    }
+        if (shipping_price > 0) {
+            line_items.push({
+                price_data: {
+                    currency: "eur",
+                    product_data: { name: "Shipping" },
+                    unit_amount: Math.round(shipping_price * 100)
+                },
+                quantity: 1
+            });
+        }
+
+        // CREATE STRIPE SESSION
+        stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            mode: "payment",
+            customer_email: email,
+            line_items,
+            success_url: "http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url: "http://localhost:5173/checkout",
+            metadata: {
+                client_name,
+                client_surname,
+                email,
+                phone_number,
+                billing_address,
+                billing_postal_code,
+                billing_city,
+                shipping_address,
+                shipping_postal_code,
+                shipping_city,
+                shipping_price
+            }
+        })
+            .then(session => {
+                res.json({ url: session.url });
+            })
+            .catch(error => {
+                console.error("Stripe error:", error);
+                res.status(500).json({ success: false, error: "Stripe session creation failed" });
+            });
+    });
 }
+
 
 
 // CREATE PURCHASE INPUT EXAMPLE: 
@@ -547,6 +541,9 @@ async function storePurchase(req, res) {
 //     }
 //   ]
 // }
+
+
+
 
 
 
