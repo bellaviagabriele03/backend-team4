@@ -20,7 +20,6 @@ app.use('/images', express.static('public/images'))
 app.use("/retro/api/products", router)
 app.use("/retro/api/orders", orderRouter)
 
-app.get("/retro/api/platforms", productController.platformIndex)
 
 
 
