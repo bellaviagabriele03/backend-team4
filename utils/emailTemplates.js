@@ -1,5 +1,7 @@
 // ORDINE DEL CLIENTE
 export const confermaOrdineCliente = (purchase, prodotti) => {
+
+
   return `
     <!DOCTYPE html>
     <html>
@@ -8,6 +10,7 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+        .logo { max-width: 200px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
         .content { padding: 20px; background-color: #f9f9f9; }
         .info-section { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
         .product-item { border-bottom: 1px solid #ddd; padding: 15px 0; }
@@ -24,6 +27,7 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
     <body>
       <div class="container">
         <div class="header">
+          <h2>BACK TO THE RETRO</h2>
           <h1>✅ Ordine Confermato!</h1>
         </div>
         <div class="content">
@@ -48,7 +52,6 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
     const originalPrice = parseFloat(p.original_price);
     const discountedPrice = p.discounted_price ? parseFloat(p.discounted_price) : null;
     const finalPrice = discountedPrice ? originalPrice - discountedPrice : originalPrice;
-    const unitPriceFromDB = p.unit_price / 100; // Prezzo salvato nel DB (in centesimi)
     const hasDiscount = discountedPrice && discountedPrice > 0;
     const discountPercentage = hasDiscount ? Math.round((discountedPrice / originalPrice) * 100) : 0;
 
@@ -85,6 +88,7 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
           <p>Per qualsiasi domanda, rispondi pure a questa email.</p>
         </div>
         <div class="footer">
+          <h2>BACK TO THE RETRO</h2>
           <p>Back to the Retro - Il tuo negozio di videogiochi vintage</p>
           <p>Questa è una email automatica di conferma ordine.</p>
         </div>
@@ -96,6 +100,8 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
 
 // EMAIL DI CONFERMA AGLI ADMIN
 export const notificaOrdineAdmin = (purchase, prodotti) => {
+
+
   return `
     <!DOCTYPE html>
     <html>
@@ -104,6 +110,7 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 700px; margin: 0 auto; padding: 20px; }
         .header { background-color: #FF5722; color: white; padding: 20px; text-align: center; }
+        .logo { max-width: 200px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
         .content { padding: 20px; background-color: #f9f9f9; }
         .info-box { background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #FF5722; border-radius: 5px; }
         .product-item { border-bottom: 1px solid #ddd; padding: 15px 0; }
@@ -121,6 +128,7 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
     <body>
       <div class="container">
         <div class="header">
+          <h2>BACK TO THE RETRO</h2>
           <h1>🔔 Nuovo Ordine Ricevuto!</h1>
           <p style="margin: 0; font-size: 14px;">Sistema di notifica automatico</p>
         </div>
@@ -153,7 +161,6 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
     const originalPrice = parseFloat(p.original_price);
     const discountedPrice = p.discounted_price ? parseFloat(p.discounted_price) : null;
     const finalPrice = discountedPrice ? originalPrice - discountedPrice : originalPrice;
-    const unitPriceFromDB = p.unit_price / 100;
     const hasDiscount = discountedPrice && discountedPrice > 0;
     const discountPercentage = hasDiscount ? Math.round((discountedPrice / originalPrice) * 100) : 0;
     const totalDiscount = hasDiscount ? (discountedPrice * p.quantity) : 0;
