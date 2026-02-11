@@ -44,6 +44,31 @@ app.get("/retro/api/platforms", (req, res) => {
 });
 
 
+app.get("/retro/api/platforms/brands", (req, res) => {
+    const queryBrand = `
+        SELECT DISTINCT platforms.brand
+        FROM products 
+        INNER JOIN platforms ON products.platform_id = platforms.id
+        ORDER BY platforms.brand ASC 
+    `;
+    connection.query(queryBrand, (err, result) => {
+        if (err) {
+            res.status(500);
+            return res.json({
+                success: false,
+                err: err.message
+            })
+        }
+
+        res.status(200)
+        res.json({
+            success: true,
+            results: result,
+        })
+    })
+})
+
+
 
 
 

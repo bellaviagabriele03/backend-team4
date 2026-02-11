@@ -15,7 +15,7 @@ function index(req, res) {
     const max = req.query.max
     const price = parseInt(req.query.price)
     const platform = req.query.platform
-
+    const brand = req.query.brand
 
     //INDEX L'HO DOVUTA CAMBIARE PERCHE' ALTRIMENTI NON POTEVO FARE IL FILTRO PER PREZZO E PER LA PIATTAFORMA CONTEMPORANEAMENTE SORRY <3
     let finalQuery = `
@@ -54,6 +54,11 @@ function index(req, res) {
     if (platform !== undefined && platform !== "") {
         finalQuery += " AND LOWER(platforms.name) LIKE LOWER(?)";
         params.push(`%${platform.replace(/\+/g, " ")}%`);
+    }
+    //BRAND FILTER 
+    if(brand !== undefined && brand !== "") {
+        finalQuery += "AND LOWER(platforms.brand) LIKE LOWER(?)";
+        params.push(`%${brand.replace(/\+/g, " ")}%`)
     }
 
     finalQuery += " ORDER BY products.price ASC";
