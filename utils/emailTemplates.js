@@ -62,7 +62,7 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
                 <br>
                 <small>Piattaforma: ${p.platform_name || 'N/A'}</small><br>
                 <div class="price-row">
-                  <span>Quantità: ${p.quantity}</span>
+                  <span>Prezzo: </span>
                   <span>
                     ${hasDiscount
         ? `<span class="original-price">€${originalPrice.toFixed(2)}</span> 
@@ -77,9 +77,15 @@ export const confermaOrdineCliente = (purchase, prodotti) => {
   }).join('')}
             
             <div class="price-row" style="margin-top: 15px;">
-              <span><strong>Spedizione:</strong></span>
-              <span>€${parseFloat(purchase.shipping_price).toFixed(2)}</span>
-            </div>
+  <span><strong>Spedizione:</strong> </span>
+  <span>
+    ${Number(purchase.shipping_price) === 0
+      ? "Gratuita"
+      : `€${Number(purchase.shipping_price).toFixed(2)}`
+    }
+  </span>
+</div>
+
             
             <p class="total">Totale: €${parseFloat(purchase.total_price).toFixed(2)}</p>
           </div>
@@ -172,7 +178,7 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
                 <br>
                 <small>Piattaforma: ${p.platform_name || 'N/A'} | Categoria: ${p.category_name || 'N/A'}</small><br>
                 <div class="price-row">
-                  <span>Quantità: ${p.quantity}</span>
+                  <span>Prezzo: </span>
                   <span>
                     ${hasDiscount
         ? `<span class="original-price">€${originalPrice.toFixed(2)}</span> 
@@ -192,10 +198,16 @@ export const notificaOrdineAdmin = (purchase, prodotti) => {
                 `;
   }).join('')}
             
-            <div class="price-row" style="margin-top: 15px; font-size: 16px;">
-              <span><strong>Costo Spedizione:</strong></span>
-              <span><strong>€${parseFloat(purchase.shipping_price).toFixed(2)}</strong></span>
-            </div>
+            <div class="price-row" style="margin-top: 15px;">
+  <span><strong>Spedizione:</strong> </span>
+  <span>
+    ${Number(purchase.shipping_price) === 0
+      ? " Gratuita"
+      : `€${Number(purchase.shipping_price).toFixed(2)}`
+    }
+  </span>
+</div>
+
             
             <p class="total">TOTALE ORDINE: €${parseFloat(purchase.total_price).toFixed(2)}</p>
           </div>
